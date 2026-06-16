@@ -133,6 +133,46 @@ CREATE TABLE point_history (
     CONSTRAINT fk_point_history_member FOREIGN KEY (member_id) REFERENCES member (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+-- ---------------------------------------------------------------------
+-- 8. 결제 Dead Letter (재시도까지 모두 소진한 영구 실패 기록)
+--    보상(재고 복구·라인 취소)과는 독립적인 관측용 테이블.
+--    운영자가 "왜, 몇 번 시도했다가 실패했는지"를 사후에 조회하기 위함.
+-- ---------------------------------------------------------------------
+CREATE TABLE payment_dead_letter (
+    id         BIGINT       NOT NULL AUTO_INCREMENT,
+    order_no   VARCHAR(36)  NOT NULL,
+    member_id  BIGINT       NOT NULL,
+    method     VARCHAR(20)  NOT NULL COMMENT 'CREDIT_CARD/YPAY/YPOINT',
+    amount     BIGINT       NOT NULL,
+    reason     VARCHAR(255) NOT NULL,
+    attempts   INT          NOT NULL COMMENT '최종 실패까지의 시도 횟수',
+    created_at DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    KEY idx_payment_dead_letter_order_no (order_no),
+    KEY idx_payment_dead_letter_member (member_id),
+    CONSTRAINT fk_payment_dead_letter_member FOREIGN KEY (member_id) REFERENCES member (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- ---------------------------------------------------------------------
+-- 9. 예약(재고 확보) Dead Letter — 재시도까지 모두 소진한 영구 실패 기록
+--    Redis/DB 일시 장애로 재고 확보 자체가 끝내 실패한 경우만 남긴다.
+--    실제 매진(정상 비즈니스 결과)은 여기 남기지 않는다.
+-- ---------------------------------------------------------------------
+CREATE TABLE booking_dead_letter (
+    id         BIGINT       NOT NULL AUTO_INCREMENT,
+    order_no   VARCHAR(36)  NOT NULL,
+    product_id BIGINT       NOT NULL,
+    member_id  BIGINT       NOT NULL,
+    reason     VARCHAR(255) NOT NULL,
+    attempts   INT          NOT NULL COMMENT '최종 실패까지의 시도 횟수',
+    created_at DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    KEY idx_booking_dead_letter_order_no (order_no),
+    KEY idx_booking_dead_letter_member (member_id),
+    CONSTRAINT fk_booking_dead_letter_product FOREIGN KEY (product_id) REFERENCES product (id),
+    CONSTRAINT fk_booking_dead_letter_member FOREIGN KEY (member_id) REFERENCES member (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 -- =====================================================================
 --  초기 데이터 (코드 수정 없이 실행 / 테스트용)
 -- =====================================================================
