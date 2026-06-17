@@ -1,6 +1,6 @@
 package com.example.reservepay.domain.payment.strategy;
 
-import com.example.reservepay.domain.payment.PaymentMethod;
+import com.example.reservepay.domain.payment.status.PaymentMethod;
 
-public record PaymentLineCommand(PaymentMethod method, long amount, String idempotencyKey) {
+public record PaymentLineCommand(PaymentMethod method, long amount, String orderNo) {
 }
