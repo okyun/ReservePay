@@ -1,4 +1,4 @@
-package com.example.reservepay.domain.payment;
+package com.example.reservepay.domain.payment.status;
 
 import java.util.EnumSet;
 import java.util.Map;
