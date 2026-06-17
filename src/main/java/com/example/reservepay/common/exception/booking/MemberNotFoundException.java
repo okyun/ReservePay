@@ -4,14 +4,14 @@ import com.example.reservepay.common.exception.ReservePayException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-public class DuplicateRequestException extends ReservePayException {
+public class MemberNotFoundException extends ReservePayException {
 
-    public DuplicateRequestException(String orderNo) {
-        super("이미 처리 중이거나 처리된 요청입니다. orderNo=" + orderNo);
+    public MemberNotFoundException(long memberId) {
+        super("회원을 찾을 수 없습니다. memberId=" + memberId);
     }
 
     @Override
     public ResponseEntity<?> toResponseEntity() {
-        return errorResponse(HttpStatus.CONFLICT, "DUPLICATE_REQUEST");
+        return errorResponse(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND");
     }
 }
