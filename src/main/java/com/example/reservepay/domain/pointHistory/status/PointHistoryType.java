@@ -1,4 +1,4 @@
-package com.example.reservepay.domain.pointHistory;
+package com.example.reservepay.domain.pointHistory.status;
 
 public enum PointHistoryType {
 

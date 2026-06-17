@@ -1,5 +1,6 @@
 package com.example.reservepay.domain.pointHistory;
 
+import com.example.reservepay.domain.pointHistory.status.PointHistoryType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -32,7 +33,7 @@ public class PointHistory {
         return record(memberId, orderId, -amount, PointHistoryType.USE);
     }
 
-    public static PointHistory refund(long memberId, long orderId, long amount) {
+    public static PointHistory refund(long memberId, Long orderId, long amount) {
         return record(memberId, orderId, amount, PointHistoryType.REFUND);
     }
 
