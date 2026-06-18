@@ -1,5 +1,6 @@
 package com.example.reservepay.domain.payment;
 
+import com.example.reservepay.domain.payment.status.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
