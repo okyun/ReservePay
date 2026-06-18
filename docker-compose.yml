@@ -1,0 +1,119 @@
+# =====================================================================
+#  ReservePay — Docker Compose
+#
+#  기본 실행:  make up
+#               → app 1대 (http://localhost:${APP_HOST_PORT:-8081})
+#
+#  분산 실증:  make up-distributed
+#               → app1 + app2 + Nginx LB (동일 포트)
+#
+#  MySQL : localhost:3306   Redis : localhost:6379
+# =====================================================================
+
+x-app-environment: &app-environment
+  SERVER_PORT: 8080
+  SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/reservepay?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+  SPRING_DATASOURCE_USERNAME: reservepay
+  SPRING_DATASOURCE_PASSWORD: reservepay
+  SPRING_DATA_REDIS_HOST: redis
+  SPRING_DATA_REDIS_PORT: 6379
+
+x-app-base: &app-base
+  build: .
+  environment: *app-environment
+  depends_on:
+    mysql:
+      condition: service_healthy
+    db-init:
+      condition: service_completed_successfully
+    redis:
+      condition: service_healthy
+  restart: on-failure
+  healthcheck:
+    test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8080' || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 30
+    start_period: 90s
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: reservepay
+      MYSQL_DATABASE: reservepay
+      MYSQL_USER: reservepay
+      MYSQL_PASSWORD: reservepay
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql/entrypoint.sh:/usr/local/bin/custom-entrypoint.sh:ro
+    entrypoint: ["/bin/bash", "/usr/local/bin/custom-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-preservepay"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  db-init:
+    image: mysql:8.0
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASSWORD: reservepay
+      MYSQL_DATABASE: reservepay
+      MYSQL_USER: reservepay
+      MYSQL_PASSWORD: reservepay
+    volumes:
+      - ./src/main/java/sql/schema.sql:/schema/schema.sql:ro
+      - ./docker/mysql/patch-missing-tables.sql:/schema/patch-missing-tables.sql:ro
+      - ./docker/mysql/reset-and-init.sh:/reset-and-init.sh:ro
+    entrypoint: ["/bin/bash", "/reset-and-init.sh"]
+    restart: "no"
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # 기본: 단일 앱 (가벼운 로컬 실행·과제 재현)
+  app:
+    <<: *app-base
+    ports:
+      - "${APP_HOST_PORT:-8081}:8080"
+
+  # --profile distributed: 앱 2대 + Nginx (분산 구성 실증용)
+  app1:
+    <<: *app-base
+    profiles: [distributed]
+
+  app2:
+    <<: *app-base
+    profiles: [distributed]
+
+  nginx:
+    image: nginx:1.27-alpine
+    profiles: [distributed]
+    ports:
+      - "${APP_HOST_PORT:-8081}:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      app1:
+        condition: service_healthy
+      app2:
+        condition: service_healthy
+    restart: on-failure

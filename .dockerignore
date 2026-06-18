@@ -1,0 +1,9 @@
+.git
+.gitignore
+.idea
+.gradle
+build
+out
+*.iml
+HELP.md
+DECISIONS.md
