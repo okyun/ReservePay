@@ -1,6 +1,7 @@
 package com.example.reservepay.redis;
 
-import com.example.reservepay.domain.payment.PaymentMethod;
+import com.example.reservepay.domain.payment.status.PaymentMethod;
+import com.example.reservepay.domain.paymentDead.PaymentDeadLetter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamRecords;
@@ -10,11 +11,8 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 /**
- * [쟁점6] 재시도(최대 2회)까지 모두 실패한 결제 라인을 실시간 로그처럼 보기 위한 Redis Stream 기록.
+ * 재시도(최대 2회)까지 모두 실패한 결제 라인을 실시간 로그처럼 보기 위한 Redis Stream 기록.
  * 영구 보존·SQL 조회가 필요한 진본 기록은 MySQL {@code payment_dead_letter} 테이블
- * ({@link com.example.reservepay.domain.payment.PaymentDeadLetter})이 담당한다.
- * 이 클래스는 빠른 관측(tail -f 같은 실시간 모니터링)용 보조 기록이며, 실패해도 본 흐름(보상·DB 기록)에는
- * 영향을 주지 않는다(fire-and-forget).
  */
 @Slf4j
 @Component

@@ -1,8 +1,6 @@
 package com.example.reservepay.redis;
 
-import com.example.reservepay.common.exception.DuplicateReservationException;
-import com.example.reservepay.common.exception.ProductNotFoundException;
-import com.example.reservepay.common.exception.SoldOutException;
+import com.example.reservepay.common.exception.ReservePayException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
@@ -25,16 +23,16 @@ public class StockGate {
         );
 
         if (result == null) {
-            throw new ProductNotFoundException(productId);
+            throw ReservePayException.productNotFound(productId);
         }
         if (result == -3) {
-            throw new DuplicateReservationException(productId, memberId);
+            throw ReservePayException.duplicateReservation(productId, memberId);
         }
         if (result == -2) {
-            throw new ProductNotFoundException(productId);
+            throw ReservePayException.productNotFound(productId);
         }
         if (result == -1) {
-            throw new SoldOutException(productId);
+            throw ReservePayException.soldOut(productId);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.example.reservepay.redis;
 
+import com.example.reservepay.domain.bookingDead.BookingDeadLetter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamRecords;
@@ -11,8 +12,6 @@ import java.util.Map;
 /**
  * 예약(재고 확보) Dead Letter를 실시간 로그처럼 보기 위한 Redis Stream 기록.
  * 진본·영구 기록은 MySQL {@code booking_dead_letter} 테이블
- * ({@link com.example.reservepay.domain.order.BookingDeadLetter})이 담당한다.
- * fire-and-forget이며 실패해도 본 흐름(DB 기록·응답)에는 영향을 주지 않는다.
  */
 @Slf4j
 @Component
