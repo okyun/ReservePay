@@ -23,17 +23,14 @@ public class Product {
     @Column(nullable = false)
     private Long price;
 
-    @Column(name = "checkin_at", nullable = false)
-    private LocalDateTime checkinAt;
-
-    @Column(name = "checkout_at", nullable = false)
-    private LocalDateTime checkoutAt;
+    @Column(name = "checkin_opening_at", nullable = false)
+    private LocalDateTime checkinOpeningAt;
 
     @Column(name = "total_stock", nullable = false)
     private Integer totalStock;
 
     public static Product of(String name, long price,
-                             LocalDateTime checkinAt, LocalDateTime checkoutAt,
+                             LocalDateTime checkinOpeningAt,
                              int totalStock) {
         if (price < 0) {
             throw new IllegalArgumentException("판매가는 0 이상이어야 합니다.");
@@ -41,16 +38,24 @@ public class Product {
         if (totalStock < 0) {
             throw new IllegalArgumentException("재고는 0 이상이어야 합니다.");
         }
-        if (!checkoutAt.isAfter(checkinAt)) {
-            throw new IllegalArgumentException("체크아웃은 체크인 이후여야 합니다.");
-        }
 
         Product product = new Product();
         product.name = name;
         product.price = price;
-        product.checkinAt = checkinAt;
-        product.checkoutAt = checkoutAt;
+        product.checkinOpeningAt = checkinOpeningAt;
         product.totalStock = totalStock;
         return product;
+    }
+
+    public boolean isSaleOpen() {
+        return isSaleOpenAt(checkinOpeningAt);
+    }
+
+    public static boolean isSaleOpenAt(LocalDateTime checkinOpeningAt) {
+        return !LocalDateTime.now().isBefore(checkinOpeningAt);
+    }
+
+    public void updateCheckinOpeningAt(LocalDateTime checkinOpeningAt) {
+        this.checkinOpeningAt = checkinOpeningAt;
     }
 }
