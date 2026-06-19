@@ -1,0 +1,32 @@
+# 로컬 IDE 실행 기본값. Docker에서는 docker-compose.yml 환경변수로 덮어씀.
+spring:
+  application:
+    name: ReservePay
+
+  datasource:
+    # ${환경변수:기본값} — 로컬: localhost, Docker: mysql 호스트명
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/reservepay?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:reservepay}
+    password: ${SPRING_DATASOURCE_PASSWORD:reservepay}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 1000  # DB 장애 시 빠른 실패 (fail-closed)
+
+  jpa:
+    hibernate:
+      ddl-auto: none            # 스키마는 schema.sql로 관리, Hibernate 자동 DDL 비활성
+    open-in-view: false         # 트랜잭션 밖 지연 로딩 방지
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  data:
+    redis:
+      # 재고 게이트·멱등성·스트림 큐 공용 Redis
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 300ms            # 명령 응답 타임아웃
+      connect-timeout: 300ms    # 연결 타임아웃
+
+server:
+  port: ${SERVER_PORT:8080}     # Docker: 컨테이너 8080, 호스트 8081 매핑
